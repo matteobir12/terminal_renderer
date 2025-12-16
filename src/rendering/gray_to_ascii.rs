@@ -1,23 +1,33 @@
-pub fn gray_to_ascii() {
+pub fn gray_to_ascii(height_px: u32, width_px: u32) -> String {
     let img = image::open("input.png")
         .expect("failed to open image")
         .to_luma8();
 
-    let ramp = b"@%#*+=-:. ";
+    let ramp = b"#@%x+=~-:. ";
+    let mut output = String::new();
 
-    for y in (0..img.height()).step_by(4) {
-        for x in (0..img.width()).step_by(4) {
+    let height_step = img.height() / height_px;
+    let width_step = img.width() / width_px;
+
+    for y in (0..img.height()).step_by(height_step as usize) {
+        for x in (0..img.width()).step_by(width_step as usize) {
             let mut intensity = 0;
-            for y_off in 0..4 {
-                for x_off in 0..4 {
-                    let pixel = img.get_pixel(x + x_off, y + y_off);
-                    intensity += pixel[0] as usize;
+            for y_off in 0..height_step {
+                for x_off in 0..width_step {
+                    if x + x_off < img.width() && y + y_off < img.height() {
+                        let pixel = img.get_pixel(x + x_off, y + y_off);
+                        intensity += pixel[0] as usize;
+                    }
                 }
             }
 
-            let idx = intensity * (ramp.len() - 1) / (255 * 16);
-            print!("{}", ramp[idx] as char);
+            let pool_size = (height_step * width_step) as usize;
+            let idx = intensity * (ramp.len() - 1) / (255 * pool_size);
+            output.push(ramp[idx] as char);
         }
-        println!();
+        output.push('\r');
+        output.push('\n');
     }
+
+    return output;
 }

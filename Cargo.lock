@@ -831,6 +831,7 @@ name = "terminal_renderer"
 version = "0.1.0"
 dependencies = [
  "image",
+ "libc",
 ]
 
 [[package]]
