@@ -3,7 +3,7 @@ mod terminal;
 
 use crate::terminal::Terminal;
 use std::io::{self, Write};
-use crate::rendering::gray_to_ascii;
+use crate::rendering::{do_pipeline, gray_to_ascii};
 
 fn main() -> io::Result<()> {
     let mut term = Terminal::new()?;
