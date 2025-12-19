@@ -4,6 +4,12 @@ pub struct Triangle {
     vertices: [Vec3; 3]
 }
 
+impl Triangle {
+  pub fn new(v1:Vec3, v2:Vec3, v3:Vec3) -> Self {
+    return Triangle{vertices: [v1, v2, v3]}
+  }
+}
+
 pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let fov = 45.;
   let scale = 1. / ((fov * std::f32::consts::PI / 90.)).tan();
@@ -78,13 +84,14 @@ fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
 
 fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let mut img = GrayImage::new(res_width, res_height);
-  let mut z_buff = GrayImage::new(res_width, res_height);
+  let mut z_buff = vec![f32::INFINITY; (res_width * res_height) as usize];
 
 
   for prim in prims {
     let vt1 = prim.triangle.vertices[0];
     let vt2 = prim.triangle.vertices[1];
     let vt3 = prim.triangle.vertices[2];
+    let z = (vt1[2] + vt2[2] + vt3[2]) / 3 as f32;
 
     let nc1 = vt1.truncate() / vt1[2];
     let nc2 = vt2.truncate() / vt2[2];
@@ -104,7 +111,10 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        img.put_pixel(x, y, image::Luma([lerp_three_pts(UVec2 { x: x, y: y }, screen1, prim.color[0], screen2, prim.color[1], screen3, prim.color[2])]));
+        if z_buff[((x * res_width) + y) as usize] > z {
+          img.put_pixel(x, y, image::Luma([lerp_three_pts(UVec2 { x: x, y: y }, screen1, prim.color[0], screen2, prim.color[1], screen3, prim.color[2])]));
+          z_buff[((x * res_width) + y) as usize] = z;
+        }
       }
     }
   }
