@@ -24,11 +24,11 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   rasterize(pipe_data, height, width)
 }
 
-pub fn bary(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
+pub fn barycentric(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
   let ac = c - a;
   let ab = b - a;
-
-  let total_area = ac.cross(ab).length().abs() / 2.0;
+  
+  let total_area = ab.cross(ac).length().abs() / 2.0;
 
   let ap = p - a;
   let bp = p - b;

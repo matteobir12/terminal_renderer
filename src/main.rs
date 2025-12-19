@@ -22,16 +22,15 @@ fn main() -> io::Result<()> {
     let tri = Triangle {
       vertices: [
         Vec3::new(10.0, 12.0, 6.0),
-        Vec3::new(14.0, 12.0, 6.0),
-        Vec3::new(16.0, 12.0, 6.0)
+        Vec3::new(14.0, 13.0, 6.0),
+        Vec3::new(16.0, 15.0, 6.0)
       ]
     };
-    println!("printing triangle\r\n\r\n");
-    println!("Triangle: {:?}", &tri);
-    let p = Vec3::new(10.0, 12.0, 6.0);
-    let (u, v, w) = barycentric(p, &tri.vertices[0], &tri.vertices[1],&tri.vertices[2]);
-    println!("Triangle: {:?}", &tri);
-    println!("Barycentric: {} {} {}", u, v, w);
+    let p = Vec3::new(11.0, 12.5, 6.0);
+    let (u, v, w) = barycentric(&p, &tri.vertices[0], &tri.vertices[1], &tri.vertices[2]);
+    println!("printing triangle\r\n");
+    println!("Triangle: {:?}\r\n", &tri);
+    println!("Barycentric: {} {} {}\r\n", u, v, w);
 
     let tris = vec![tri];
     let eye_mat = Mat4::IDENTITY;
