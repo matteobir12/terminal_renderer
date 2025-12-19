@@ -1,8 +1,6 @@
-pub fn gray_to_ascii(height_px: u32, width_px: u32) -> String {
-    let img = image::open("input.png")
-        .expect("failed to open image")
-        .to_luma8();
+use image::GrayImage;
 
+pub fn gray_to_ascii(img: GrayImage, height_px: u32, width_px: u32) -> String {
     let ramp = b"#@%x+=~-:. ";
     let mut output = String::new();
 

@@ -1,9 +1,10 @@
 mod rendering;
 mod terminal;
 
+use glam::{Vec3, Mat4};
 use crate::terminal::Terminal;
 use std::io::{self, Write};
-use crate::rendering::{gray_to_ascii};
+use crate::rendering::{gray_to_ascii, do_pipeline, Triangle};
 
 fn main() -> io::Result<()> {
     let mut term = Terminal::new()?;
@@ -12,8 +13,8 @@ fn main() -> io::Result<()> {
     term.enter_alternate_screen()?;
     term.hide_cursor()?;
 
-    let ascii_art: String = gray_to_ascii(48, 128);
-
+    let tris = vec![Triangle::new(Vec3::new(1., 1., 0.), Vec3::new(2., 2., 1.), Vec3::new(2., 1., 1.))];
+    let cam = Mat4::IDENTITY;
 
     loop {
         let input = term.read_input_non_blocking()?;
@@ -24,6 +25,8 @@ fn main() -> io::Result<()> {
         }
 
         term.clear_screen()?;
+        let img = do_pipeline(&tris, &cam);
+        let ascii_art: String = gray_to_ascii(img, 48, 128);
         io::stdout().write_all(ascii_art.as_bytes())?;
         io::stdout().flush()?;
 

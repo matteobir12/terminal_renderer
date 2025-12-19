@@ -11,12 +11,15 @@ impl Triangle {
 }
 
 pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Luma<u8>, Vec<u8>> {
+  let width = 256;
+  let height = 256;
   let fov = 45.;
-  let scale = 1. / ((fov * std::f32::consts::PI / 90.)).tan();
+  let aspect = width as f32 / height as f32;
   let near = 0.01;
   let far = 10.0;
-  let pipe_data = vertex_step(input_vtxs, cam_mat);
-  rasterize(pipe_data, 256, 256)
+  let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
+  let pipe_data = vertex_step(input_vtxs, proj * cam_mat);
+  rasterize(pipe_data, height, width)
 }
 
 struct VertexStepRes {
@@ -24,7 +27,7 @@ struct VertexStepRes {
     color: [u8; 3]
 }
 
-fn vertex_step(input_vtxs: &[Triangle], cam_mat: &Mat4) -> Vec<VertexStepRes> {
+fn vertex_step(input_vtxs: &[Triangle], cam_mat: Mat4) -> Vec<VertexStepRes> {
   let mut res = Vec::with_capacity(input_vtxs.len());
 
   // can filter out points outside of fov
