@@ -1,7 +1,9 @@
 use glam::{UVec2, Mat4, Vec2, Vec3};
 use image::{ImageBuffer, GrayImage, Luma};
+
+#[derive(Debug)]
 pub struct Triangle {
-    vertices: [Vec3; 3]
+    pub vertices: [Vec3; 3]
 }
 
 impl Triangle {
@@ -22,6 +24,26 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   rasterize(pipe_data, height, width)
 }
 
+pub fn bary(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
+  let ac = c - a;
+  let ab = b - a;
+
+  let total_area = ac.cross(ab).length().abs() / 2.0;
+
+  let ap = p - a;
+  let bp = p - b;
+  let bc = c - b;
+
+  let area_A = ap.cross(ab).length().abs() / 2.0;
+  let area_B = ap.cross(ac).length().abs() / 2.0;
+  let area_C = bp.cross(bc).length().abs() / 2.0;
+  
+  let u = area_A / total_area;
+  let v = area_B / total_area;
+  let w = area_C / total_area;
+  
+  (u, v, w)
+}
 struct VertexStepRes {
     triangle: Triangle,
     color: [u8; 3]
@@ -48,36 +70,10 @@ fn vertex_step(input_vtxs: &[Triangle], cam_mat: Mat4) -> Vec<VertexStepRes> {
   return res;
 }
 
-fn barycentric(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> (f32, f32, f32) {
-  let v0 = b - a;
-  let v1 = c - a;
-  let v2 = p - a;
-
-  let d00 = v0.dot(v0);
-  let d01 = v0.dot(v1);
-  let d11 = v1.dot(v1);
-  let d20 = v2.dot(v0);
-  let d21 = v2.dot(v1);
-
-  let denom = d00 * d11 - d01 * d01;
-
-  let v = (d11 * d20 - d01 * d21) / denom;
-  let w = (d00 * d21 - d01 * d20) / denom;
-  let u = 1.0 - v - w;
-
-  return (u, v, w);
-}
 
 fn lerp_three_pts(pos: UVec2, pt1: UVec2, color1:u8, pt2: UVec2, color2:u8, pt3: UVec2, color3:u8) -> u8
 {
-  let (w1, w2, w3) = barycentric(pos.as_vec2(), pt1.as_vec2(), pt2.as_vec2(), pt3.as_vec2());
-
-  let value =
-      (color1 as f32) * w1 +
-      (color2 as f32) * w2 +
-      (color3 as f32) * w3;
-
-  return value.round().clamp(0.0, 255.0) as u8;
+  1
 }
 
 fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
