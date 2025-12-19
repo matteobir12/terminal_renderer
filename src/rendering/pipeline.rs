@@ -1,5 +1,5 @@
 use glam::{UVec2, Mat4, Vec2, Vec3};
-use image::{ImageBuffer, GrayImage, };
+use image::{ImageBuffer, GrayImage, Luma};
 pub struct Triangle {
     vertices: [Vec3; 3]
 }
@@ -8,11 +8,9 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   let fov = 45.;
   let scale = 1. / ((fov * std::f32::consts::PI / 90.)).tan();
   let near = 0.01;
-  let far = 10.;
-
+  let far = 10.0;
   let pipe_data = vertex_step(input_vtxs, cam_mat);
-  rasterize(pipe_data, 256, 256);
-
+  rasterize(pipe_data, 256, 256)
 }
 
 struct VertexStepRes {
@@ -41,7 +39,7 @@ fn vertex_step(input_vtxs: &[Triangle], cam_mat: &Mat4) -> Vec<VertexStepRes> {
   return res;
 }
 
-fn barycentric(p: UVec2, a: UVec2, b: UVec2, c: UVec2) -> (f32, f32, f32) {
+fn barycentric(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> (f32, f32, f32) {
   let v0 = b - a;
   let v1 = c - a;
   let v2 = p - a;
@@ -63,7 +61,7 @@ fn barycentric(p: UVec2, a: UVec2, b: UVec2, c: UVec2) -> (f32, f32, f32) {
 
 fn lerp_three_pts(pos: UVec2, pt1: UVec2, color1:u8, pt2: UVec2, color2:u8, pt3: UVec2, color3:u8) -> u8
 {
-  let (w1, w2, w3) = barycentric(pos, pt1, pt2, pt3);
+  let (w1, w2, w3) = barycentric(pos.as_vec2(), pt1.as_vec2(), pt2.as_vec2(), pt3.as_vec2());
 
   let value =
       (color1 as f32) * w1 +
@@ -78,7 +76,7 @@ fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
              (res_height as f32 * (nc[1] + 1.) / 2.) as u32)
 }
 
-fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) {
+fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let mut img = GrayImage::new(res_width, res_height);
   let mut z_buff = GrayImage::new(res_width, res_height);
 
