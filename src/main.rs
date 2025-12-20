@@ -2,11 +2,8 @@ mod rendering;
 mod terminal;
 
 use glam::{Vec3, Mat4};
-use crate::terminal::Terminal;
 use std::io::{self, Write};
-use crate::rendering::{gray_to_ascii, do_pipeline, Triangle};
-use crate::{rendering::{Triangle, do_pipeline}, terminal::Terminal};
-use std::io::{self, Write};
+use crate::{rendering::{Triangle, do_pipeline, barycentric}, terminal::Terminal};
 
 fn main() -> io::Result<()> {
     let mut term = Terminal::new()?;
