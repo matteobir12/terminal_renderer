@@ -24,11 +24,15 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   rasterize(pipe_data, height, width)
 }
 
+// Ensure the vector does NOT represent a DEGENERATE triangle. If it is, (0,0,0) is returned
 pub fn barycentric(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
   let ac = c - a;
   let ab = b - a;
   
   let total_area = ab.cross(ac).length().abs() / 2.0;
+  if total_area == 0.0 {
+    return (0.0, 0.0, 0.0);
+  }
 
   let ap = p - a;
   let bp = p - b;
@@ -76,6 +80,24 @@ fn lerp_three_pts(pos: UVec2, pt1: UVec2, color1:u8, pt2: UVec2, color2:u8, pt3:
   1
 }
 
+fn is_inside(endpoint1: UVec2, endpoint2: UVec2, x: u32, y: u32) -> bool
+{
+  let endpoint1_i = endpoint1.as_ivec2();
+  let endpoint2_i = endpoint2.as_ivec2();
+  let a = endpoint2_i.y - endpoint1_i.y;
+  let b = endpoint1_i.x - endpoint2_i.x;
+  let c = endpoint2_i.x * endpoint1_i.y - endpoint1_i.x * endpoint2_i.y;
+
+  a*(x as i32) + b*(y as i32) + c >= 0
+}
+
+fn is_inside_triangle(pt1: UVec2, pt2: UVec2, pt3: UVec2, x: u32, y: u32) -> bool 
+{
+  is_inside(pt1, pt2,x, y) &&
+  is_inside(pt2, pt3,x, y) &&
+  is_inside(pt3, pt1,x, y)
+}
+
 fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
   UVec2::new((res_width as f32 * (nc[0] + 1.) / 2.) as u32,
              (res_height as f32 * (nc[1] + 1.) / 2.) as u32)
@@ -90,7 +112,7 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     let vt1 = prim.triangle.vertices[0];
     let vt2 = prim.triangle.vertices[1];
     let vt3 = prim.triangle.vertices[2];
-    let z = (vt1[2] + vt2[2] + vt3[2]) / 3 as f32;
+    let z = (vt1[2] + vt2[2] + vt3[2]) / 3.0 as f32;
 
     let nc1 = vt1.truncate() / vt1[2];
     let nc2 = vt2.truncate() / vt2[2];
@@ -110,8 +132,8 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        if z_buff[((x * res_width) + y) as usize] > z {
-          img.put_pixel(x, y, image::Luma([lerp_three_pts(UVec2 { x: x, y: y }, screen1, prim.color[0], screen2, prim.color[1], screen3, prim.color[2])]));
+        if z_buff[((x * res_width) + y) as usize] > z && is_inside_triangle(screen1, screen2, screen3, x, y) {
+          img.put_pixel(x, y, image::Luma([255]));
           z_buff[((x * res_width) + y) as usize] = z;
         }
       }
