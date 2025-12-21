@@ -28,7 +28,7 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
 pub fn barycentric(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
   let ac = c - a;
   let ab = b - a;
-  
+
   let total_area = ab.cross(ac).length().abs() / 2.0;
   if total_area == 0.0 {
     return (0.0, 0.0, 0.0);
@@ -41,11 +41,11 @@ pub fn barycentric(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, f32, f32) {
   let area_A = ap.cross(ab).length().abs() / 2.0;
   let area_B = ap.cross(ac).length().abs() / 2.0;
   let area_C = bp.cross(bc).length().abs() / 2.0;
-  
+
   let u = area_A / total_area;
   let v = area_B / total_area;
   let w = area_C / total_area;
-  
+
   (u, v, w)
 }
 struct VertexStepRes {
@@ -74,12 +74,6 @@ fn vertex_step(input_vtxs: &[Triangle], cam_mat: Mat4) -> Vec<VertexStepRes> {
   return res;
 }
 
-
-fn lerp_three_pts(pos: UVec2, pt1: UVec2, color1:u8, pt2: UVec2, color2:u8, pt3: UVec2, color3:u8) -> u8
-{
-  1
-}
-
 fn is_inside(endpoint1: UVec2, endpoint2: UVec2, x: u32, y: u32) -> bool
 {
   let endpoint1_i = endpoint1.as_ivec2();
@@ -91,7 +85,7 @@ fn is_inside(endpoint1: UVec2, endpoint2: UVec2, x: u32, y: u32) -> bool
   a*(x as i32) + b*(y as i32) + c >= 0
 }
 
-fn is_inside_triangle(pt1: UVec2, pt2: UVec2, pt3: UVec2, x: u32, y: u32) -> bool 
+fn is_inside_triangle(pt1: UVec2, pt2: UVec2, pt3: UVec2, x: u32, y: u32) -> bool
 {
   is_inside(pt1, pt2,x, y) &&
   is_inside(pt2, pt3,x, y) &&
@@ -141,8 +135,4 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
   }
 
   return img;
-}
-
-fn fragment_step() {
-
 }
