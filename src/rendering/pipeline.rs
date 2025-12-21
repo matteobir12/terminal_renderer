@@ -19,7 +19,12 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   let aspect = width as f32 / height as f32;
   let near = 0.01;
   let far = 10.0;
-  let proj = Mat4::perspective_rh(fov, aspect, near, far);
+  //let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
+  let r = [1.,0.,0.,0., 
+           0.,1.,0.,0., 
+           0.,0.,((-1.)/(8.)),0., 
+           0.,0.,0.,1.];
+  let proj = Mat4::from_cols_array(&r);
   let pipe_data = vertex_step(input_vtxs, proj * cam_mat);
   rasterize(pipe_data, height, width)
 }
@@ -107,10 +112,10 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     let vt2 = prim.triangle.vertices[1];
     let vt3 = prim.triangle.vertices[2];
     let z = (vt1[2] + vt2[2] + vt3[2]) / 3.0 as f32;
-
-    let nc1 = vt1.truncate() / vt1[2];
-    let nc2 = vt2.truncate() / vt2[2];
-    let nc3 = vt3.truncate() / vt3[2];
+    
+    let nc1 = if vt1[2] != 0.0 {vt1.truncate() / vt1[2]} else {vt1.truncate()};
+    let nc2 = if vt2[2] != 0.0 {vt2.truncate() / vt2[2]} else {vt2.truncate()};
+    let nc3 = if vt3[2] != 0.0 {vt3.truncate() / vt3[2]} else {vt3.truncate()};
 
     let screen1 = nc_to_screen(nc1, res_height, res_width);
     let screen2 = nc_to_screen(nc2, res_height, res_width);
@@ -126,8 +131,9 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        if z_buff[((x * res_width) + y) as usize] > z && is_inside_triangle(screen1, screen2, screen3, x, y) {
-          img.put_pixel(x, y, image::Luma([255]));
+        if z < 0.0 && z_buff[((x * res_width) + y) as usize] > z && is_inside_triangle(screen1, screen2, screen3, x, y) {
+          //img.put_pixel(x, y, image::Luma([255]));
+          img.put_pixel(x, y, image::Luma([(z * 100.0).abs() as u8]));
           z_buff[((x * res_width) + y) as usize] = z;
         }
       }

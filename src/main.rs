@@ -2,6 +2,7 @@
 mod rendering;
 mod terminal;
 
+use std::f32::consts::PI;
 use glam::{Vec3, Mat4};
 use std::io::{self, Write};
 use crate::{rendering::{Triangle, gray_to_ascii, do_pipeline}, terminal::Terminal};
@@ -50,6 +51,7 @@ fn main() -> io::Result<()> {
     let tris = cube(Vec3::new(0.,0., 6.), 1.);
     let mut eye_mat = Mat4::IDENTITY;
 
+    let yaw = PI;
     loop {
         let input = term.read_input_non_blocking()?;
         const ESC_KEY:u8 = 27;
@@ -60,33 +62,40 @@ fn main() -> io::Result<()> {
           }
 
           if input == b"w" {
-            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0));
+            eye_mat =Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)) * eye_mat;
+            //eye_mat = Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)) * eye_mat;
+            //eye_mat *= Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0));
           }
 
           if input == b"a" {
-            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(-1.0, 0.0, 0.0));
+            eye_mat =Mat4::from_translation(Vec3::new(-1.0, 0.0, 0.0)) * eye_mat;
+            //eye_mat = Mat4::from_translation(Vec3::new(-1.0, 0.0, 0.0)) * eye_mat;
+            //eye_mat *= Mat4::from_translation(Vec3::new(-1.0, 0.0, 0.0));
           }
 
           if input == b"s" {
-            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(0.0, 0.0, 1.0));
+            eye_mat = Mat4::from_translation(Vec3::new(0.0, 0.0, 1.0)) * eye_mat;
+            //eye_mat = Mat4::from_translation(Vec3::new(0.0, 0.0, 1.0)) * eye_mat;
+            //eye_mat *= Mat4::from_translation(Vec3::new(0.0, 0.0, 1.0));
           }
 
           if input == b"d" {
-            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0));
+            eye_mat = Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0)) * eye_mat;
+            //eye_mat = Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0)) * eye_mat;
+            //eye_mat *= Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0));
           }
 
-          let yaw = 0.05;
           if input == b"j" {
-            eye_mat = eye_mat * Mat4::from_rotation_y(yaw);
+            eye_mat = Mat4::from_rotation_y(-yaw) * eye_mat;
           }
 
           if input == b"l" {
-            eye_mat = eye_mat * Mat4::from_rotation_y(-yaw);
+            eye_mat =Mat4::from_rotation_y(yaw) * eye_mat;
           }
         }
-
+        println!("{}\r\n", eye_mat);
         let img = do_pipeline(&tris, &eye_mat);
-        let ascii_art = gray_to_ascii(img, 48, 128);
+        let ascii_art = gray_to_ascii(img, 170, 64);
         term.clear_screen()?;
         io::stdout().write_all(ascii_art.as_bytes())?;
         io::stdout().flush()?;

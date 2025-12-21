@@ -1,14 +1,24 @@
 use image::GrayImage;
 
-pub fn gray_to_ascii(img: GrayImage, height_px: u32, width_px: u32) -> String {
-    let ramp = b"#@%x+=~-:. ";
-    let ramp = b" .:-~=+oOx0X@&#";
+pub fn gray_to_ascii(img: GrayImage, width_px: u32, height_px: u32) -> String {
+    let ramp = b" 1234567812389123912u32918.:-~=+oOx0X@&#";
     let mut output = String::new();
 
     let height_step = img.height() / height_px;
     let width_step = img.width() / width_px;
 
+    let vert_frame = '|';
+    let horizontal_frame = '=';
+
+    output.push(vert_frame);
+    for _ in (0..img.width()).step_by(width_step as usize) {
+      output.push(horizontal_frame);
+    }
+    output.push(vert_frame);
+    output.push('\r');
+    output.push('\n');
     for y in (0..img.height()).step_by(height_step as usize) {
+        output.push(vert_frame);
         for x in (0..img.width()).step_by(width_step as usize) {
             let mut intensity = 0;
             for y_off in 0..height_step {
@@ -24,9 +34,17 @@ pub fn gray_to_ascii(img: GrayImage, height_px: u32, width_px: u32) -> String {
             let idx = intensity * (ramp.len() - 1) / (255 * pool_size);
             output.push(ramp[idx] as char);
         }
+        output.push(vert_frame);
         output.push('\r');
         output.push('\n');
     }
+    output.push(vert_frame);
+    for _ in (0..img.width()).step_by(width_step as usize) {
+      output.push(horizontal_frame);
+    }
+    output.push(vert_frame);
+    output.push('\r');
+    output.push('\n');
 
     return output;
 }
