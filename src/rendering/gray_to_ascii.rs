@@ -2,6 +2,7 @@ use image::GrayImage;
 
 pub fn gray_to_ascii(img: GrayImage, height_px: u32, width_px: u32) -> String {
     let ramp = b"#@%x+=~-:. ";
+    let ramp = b" .:-~=+oOx0X@&#";
     let mut output = String::new();
 
     let height_step = img.height() / height_px;
