@@ -28,7 +28,7 @@ fn main() -> io::Result<()> {
     //println!("Barycentric: {} {} {}\r\n", u, v, w);
 
     let mut tris = vec![tri];
-    let eye_mat = Mat4::IDENTITY;
+    let mut eye_mat = Mat4::IDENTITY;
     let mut img = do_pipeline(&tris, &eye_mat);
     match img.save("img.png") {
       Ok(T) => println!("Wrote image!\r\n"),
@@ -39,16 +39,35 @@ fn main() -> io::Result<()> {
         let input = term.read_input_non_blocking()?;
         const ESC_KEY:u8 = 27;
 
-        if !input.is_empty() && (input == b"q" || input == [ESC_KEY]) {
+        if !input.is_empty() {
+          if (input == b"q" || input == [ESC_KEY]) {
             break;
+          }
+
+          if input == b"w" {
+            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0));
+          }
+
+          if input == b"a" {
+            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0));
+          }
+
+          if input == b"s" {
+            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(0.0, 0.0, 1.0));
+          }
+
+          if input == b"d" {
+            eye_mat = eye_mat * Mat4::from_translation(Vec3::new(-1.0, 0.0, 0.0));
+          }
         }
+
         img = do_pipeline(&tris, &eye_mat);
         ascii_art = gray_to_ascii(img, 48, 128);
         term.clear_screen()?;
         io::stdout().write_all(ascii_art.as_bytes())?;
         io::stdout().flush()?;
 
-        std::thread::sleep(std::time::Duration::from_millis(1000));
+        std::thread::sleep(std::time::Duration::from_millis(16));
         tris[0].vertices[0].x -= 1.0;
         tris[0].vertices[0].y -= 1.0;
         

@@ -19,7 +19,7 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Lu
   let aspect = width as f32 / height as f32;
   let near = 0.01;
   let far = 10.0;
-  let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
+  let proj = Mat4::perspective_rh(fov, aspect, near, far);
   let pipe_data = vertex_step(input_vtxs, proj * cam_mat);
   rasterize(pipe_data, height, width)
 }
