@@ -12,19 +12,19 @@ impl Triangle {
   }
 }
 
-pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4) -> ImageBuffer<Luma<u8>, Vec<u8>> {
+pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4, ) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let width = 256;
   let height = 256;
-  let fov = 45.;
+  let fov = 90.;
   let aspect = width as f32 / height as f32;
   let near = 0.01;
   let far = 10.0;
-  //let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
-  let r = [1.,0.,0.,0., 
-           0.,1.,0.,0., 
-           0.,0.,((-1.)/(8.)),0., 
-           0.,0.,0.,1.];
-  let proj = Mat4::from_cols_array(&r);
+  let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
+  //let r = [1.,0.,0.,0., 
+  //         0.,1.,0.,0., 
+  //         0.,0.,((-1.)/(8.)),0., 
+  //         0.,0.,0.,1.];
+  //let proj = Mat4::from_cols_array(&r);
   let pipe_data = vertex_step(input_vtxs, proj * cam_mat);
   rasterize(pipe_data, height, width)
 }
@@ -131,7 +131,7 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        if z < 0.0 && z_buff[((x * res_width) + y) as usize] > z && is_inside_triangle(screen1, screen2, screen3, x, y) {
+        if is_inside_triangle(screen1, screen2, screen3, x, y) {
           //img.put_pixel(x, y, image::Luma([255]));
           img.put_pixel(x, y, image::Luma([(z * 100.0).abs() as u8]));
           z_buff[((x * res_width) + y) as usize] = z;
