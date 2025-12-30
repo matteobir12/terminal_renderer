@@ -1,6 +1,7 @@
 #[allow(non_snake_case)]
 mod rendering;
 mod terminal;
+use std::panic;
 
 use std::f32::consts::PI;
 use glam::{Mat3, Mat4, Vec3, EulerRot};
@@ -132,6 +133,10 @@ fn rotateTris(tris: &mut Vec<Triangle>, delta: Vec3) {
 }
 
 fn main() -> io::Result<()> {
+    panic::set_hook(Box::new(|info| {
+        println!("panic {}", info);
+    }));
+
     let mut sphere_tris = sphere(8, 8);
     let mut term = Terminal::new()?;
 
