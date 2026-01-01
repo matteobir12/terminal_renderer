@@ -82,19 +82,15 @@ fn vertex_step(input_vtxs: &[Triangle], cam_mat: Mat4) -> Vec<VertexStepRes> {
 }
 
 
-fn is_inside_triangle(pt1: Vec2, pt2: Vec2, pt3: Vec2, test_pt: Vec2) -> bool
+fn bary_2d_around_pt1(pt1: Vec2, pt2: Vec2, pt3: Vec2, test_pt: Vec2) -> Vec2
 {
   let t = Mat2::from_cols(pt3 - pt1, pt2 - pt1);
 
   if t.determinant().abs() < 1e-6 {
-    return false;
+    return Vec2::new(-1., -1.);
   }
 
-  let bary = t.inverse() * (test_pt - pt1);
-  let u = bary.x;
-  let v = bary.y;
-
-  u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
+  t.inverse() * (test_pt - pt1)
 }
 
 fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
@@ -106,16 +102,26 @@ fn uv2_to_v2(v: UVec2) -> Vec2 {
   Vec2::new(v.x as f32, v.y as f32)
 }
 
+fn z_to_lum(z: f32) -> image::Luma<u8> {
+  let max_z_in_view = 10.;
+  let min_z_in_view = 0.1;
+
+  let range = max_z_in_view - min_z_in_view;
+  // Z is negative, so flip first
+  let z_norm = (-z - min_z_in_view) / range;
+  let lum_f = (255. * (1. - z_norm).powi(4)).clamp(0., 255.);
+
+  image::Luma([lum_f as u8])
+}
+
 fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let mut img = GrayImage::new(res_width, res_height);
   let mut z_buff = vec![-f32::INFINITY; (res_width * res_height) as usize];
-
 
   for prim in prims {
     let vt1 = prim.triangle.vertices[0];
     let vt2 = prim.triangle.vertices[1];
     let vt3 = prim.triangle.vertices[2];
-    let z = (vt1[2] + vt2[2] + vt3[2]) / 3.0 as f32;
 
     let nc1 = if vt1[2] != 0.0 {vt1.truncate() / vt1[2]} else {vt1.truncate()};
     let nc2 = if vt2[2] != 0.0 {vt2.truncate() / vt2[2]} else {vt2.truncate()};
@@ -135,14 +141,20 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        if is_inside_triangle(uv2_to_v2(screen1), uv2_to_v2(screen2), uv2_to_v2(screen3), Vec2 { x: x as f32, y: y as f32 }) && z_buff[((x * res_width) + y) as usize] < z {
+        let u_and_v = bary_2d_around_pt1(uv2_to_v2(screen1), uv2_to_v2(screen2), uv2_to_v2(screen3), Vec2 { x: x as f32, y: y as f32 });
+        let u = u_and_v.x;
+        let v = u_and_v.y;
+        let is_px_inside_triangle = u >= 0.0 && v >= 0.0 && (u + v) <= 1.0;
+        let z = ((1. - (u + v)) * vt1[2]) + v * vt2[2] + u * vt3[2];
+
+        if is_px_inside_triangle && z_buff[((x * res_width) + y) as usize] < z {
           //img.put_pixel(x, y, image::Luma([255]));
-          img.put_pixel(x, y, image::Luma([(z * 100.0).abs() as u8]));
+          img.put_pixel(x, y, z_to_lum(z));
           z_buff[((x * res_width) + y) as usize] = z;
         }
       }
     }
   }
 
-  return img;
+  img
 }
