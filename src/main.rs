@@ -20,8 +20,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn render_loop() -> Result<(), Box<dyn std::error::Error>> {
-  // let mut sphere_tris = rendering::sphere(16, 16);
-  let mut sphere_tris = rendering::cube(1.);
+  let mut sphere_tris = rendering::sphere(16, 16, 1);
+  // let mut sphere_tris = rendering::cube(1.);
   let mut term = Terminal::new()?;
   term.enter_raw_mode()?;
   term.enter_alternate_screen()?;
@@ -69,8 +69,7 @@ fn render_loop() -> Result<(), Box<dyn std::error::Error>> {
         eye_mat =Mat4::from_rotation_y(yaw) * eye_mat;
       }
     }
-    rendering::rotateTris(&mut sphere_tris, Vec3::from_array([0.0, 0.1, 0.0]));
-    log!("{}\r\n", eye_mat);
+
     let img = rendering::do_pipeline(&sphere_tris, &eye_mat);
     let img_path = format!("imgs/img{}.png", counter.to_string());
     img.save(img_path).expect("good");

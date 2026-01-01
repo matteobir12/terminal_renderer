@@ -2,77 +2,46 @@ use std::f32::consts::PI;
 use glam::{Mat3, Vec3, EulerRot};
 use crate::rendering::Triangle;
 
-pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
-  let mut v: Vec<Vec3> = Vec::new();
-  let stacks_f = stacks as f32;
-  let sectors_f = sectors as f32;
-
-  v.push(Vec3::new(0.0, 1.0, 0.0));
-  for stack in 1..stacks {
-    let phi = (PI / 2.0) - (PI * (stack as f32 / stacks_f));
-    for sector in 0..sectors {
-      let theta = 2.0*PI*(sector as f32 / sectors_f);
-      let x = phi.cos()*theta.sin();
-      let y = phi.sin();
-      let z = -phi.cos()*theta.sin();
-      let sphere_coord = Vec3::new(x, y, z);
-      println!("phi: {} theta: {} x: {} y: {} z: {}", phi, theta, x, y, z);
-      v.push(sphere_coord);
-    }
-  }
+pub fn sphere(stacks: usize, sectors: usize, radius: usize) -> Vec<Triangle> {
   let mut tris: Vec<Triangle> = Vec::new();
-  v.push(Vec3::new(0.0, -1.0, 0.0));
-  for i in 0..sectors {
-    let a = 0;
-    let b = i + 1;
-    let c = 1 + ((i + 1) % sectors);
+  let stack_size = PI / stacks as f32;
+  let sectors_size = 2.0 * PI / sectors as f32;
 
-    let tri = Triangle {
-      vertices: [v[a], v[b], v[c]]
-    };
-    println!("a: {} b: {} c: {} Tri: {:?}", a, b, c, tri);
-    tris.push(tri);
-  }
-  println!("{:?}", tris);
-  // Do middle stacks
-  for stack in 0..(stacks - 2) {
+  for stack in 0..stacks {
+    let bottom = stack as f32 * stack_size;
+    let top = (stack + 1) as f32 * stack_size;
+
     for sector in 0..sectors {
+      let left =  sector as f32 * sectors_size;
+      let right =  (sector + 1) as f32 * sectors_size;
 
-      //Triangle 1
-      let mut a = (stack * sectors) + (sector + 1);
-      let mut b = a + sectors;
-      let c = ((stack * sectors) + 1) + ((sector + 1) % (sectors));
-      let tri1 = Triangle {
-        vertices: [v[a], v[b], v[c]]
-      };
-      tris.push(tri1);
+      let rad_f = radius as f32;
+      let p00 = Vec3::new(
+          rad_f * left.cos() * bottom.sin(),
+          rad_f * bottom.cos(),
+          rad_f * left.sin() * bottom.sin());
 
-      println!("a: {} b: {} c: {}", a, b, c);
+      let p01 = Vec3::new(
+          rad_f * right.cos() * bottom.sin(),
+          rad_f * bottom.cos(),
+          rad_f * right.sin() * bottom.sin());
 
+      let p10 = Vec3::new(
+          rad_f * left.cos() * top.sin(),
+          rad_f * top.cos(),
+          rad_f * left.sin() * top.sin());
 
-      // Triangle 2
-      a = b;
-      b = c + sectors;
-      let tri2 = Triangle {
-        vertices: [v[a], v[b], v[c]]
-      };
-      println!("a: {} b: {} c: {}", a, b, c);
-      tris.push(tri2);
+      let p11 = Vec3::new(
+          rad_f * right.cos() * top.sin(),
+          rad_f * top.cos(),
+          rad_f * right.sin() * top.sin());
+
+      tris.push(Triangle { vertices: [p00, p10, p11] });
+      tris.push(Triangle { vertices: [p00, p11, p01] });
     }
   }
 
-  for i in 0..sectors {
-    let a = sectors * (stacks - 2) + 1 + i;
-    let b = sectors * (stacks - 1) + 1;
-    let c = sectors * (stacks - 2) + 1 + ((i + 1) % sectors);
-    println!("a: {} b: {} c: {}", a, b, c);
-    let tri = Triangle {
-      vertices: [v[a], v[b], v[c]]
-    };
-    tris.push(tri);
-  }
-
-  return tris;
+  tris
 }
 
 pub fn cube(size: f32) -> Vec<Triangle> {
