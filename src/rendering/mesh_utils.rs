@@ -6,7 +6,7 @@ pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
   let mut v: Vec<Vec3> = Vec::new();
   let stacks_f = stacks as f32;
   let sectors_f = sectors as f32;
-  
+
   v.push(Vec3::new(0.0, 1.0, 0.0));
   for stack in 1..stacks {
     let phi = (PI / 2.0) - (PI * (stack as f32 / stacks_f));
@@ -27,7 +27,7 @@ pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
     let b = i + 1;
     let c = 1 + ((i + 1) % sectors);
 
-    let tri = Triangle { 
+    let tri = Triangle {
       vertices: [v[a], v[b], v[c]]
     };
     println!("a: {} b: {} c: {} Tri: {:?}", a, b, c, tri);
@@ -41,8 +41,8 @@ pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
       //Triangle 1
       let mut a = (stack * sectors) + (sector + 1);
       let mut b = a + sectors;
-      let c = ((stack * sectors) + 1) + ((sector + 1) % (sectors)); 
-      let tri1 = Triangle { 
+      let c = ((stack * sectors) + 1) + ((sector + 1) % (sectors));
+      let tri1 = Triangle {
         vertices: [v[a], v[b], v[c]]
       };
       tris.push(tri1);
@@ -53,7 +53,7 @@ pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
       // Triangle 2
       a = b;
       b = c + sectors;
-      let tri2 = Triangle { 
+      let tri2 = Triangle {
         vertices: [v[a], v[b], v[c]]
       };
       println!("a: {} b: {} c: {}", a, b, c);
@@ -62,11 +62,11 @@ pub fn sphere(stacks: usize, sectors: usize) -> Vec<Triangle> {
   }
 
   for i in 0..sectors {
-    let a = sectors * (stacks - 2) + 1 + i; 
+    let a = sectors * (stacks - 2) + 1 + i;
     let b = sectors * (stacks - 1) + 1;
     let c = sectors * (stacks - 2) + 1 + ((i + 1) % sectors);
     println!("a: {} b: {} c: {}", a, b, c);
-    let tri = Triangle { 
+    let tri = Triangle {
       vertices: [v[a], v[b], v[c]]
     };
     tris.push(tri);

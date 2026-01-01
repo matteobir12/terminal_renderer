@@ -1,5 +1,7 @@
-use glam::{UVec2, Mat4, Vec2, Vec3};
+use glam::{UVec2, Mat4, Vec2, Vec3, Mat2};
 use image::{ImageBuffer, GrayImage, Luma};
+
+use crate::log;
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -20,9 +22,9 @@ pub fn do_pipeline(input_vtxs: &Vec<Triangle>, cam_mat: &Mat4, ) -> ImageBuffer<
   let near = 0.01;
   let far = 10.0;
   let proj = Mat4::perspective_rh_gl(fov, aspect, near, far);
-  //let r = [1.,0.,0.,0., 
-  //         0.,1.,0.,0., 
-  //         0.,0.,((-1.)/(8.)),0., 
+  //let r = [1.,0.,0.,0.,
+  //         0.,1.,0.,0.,
+  //         0.,0.,((-1.)/(8.)),0.,
   //         0.,0.,0.,1.];
   //let proj = Mat4::from_cols_array(&r);
   let pipe_data = vertex_step(input_vtxs, proj * cam_mat);
@@ -79,22 +81,20 @@ fn vertex_step(input_vtxs: &[Triangle], cam_mat: Mat4) -> Vec<VertexStepRes> {
   return res;
 }
 
-fn is_inside(endpoint1: UVec2, endpoint2: UVec2, x: u32, y: u32) -> bool
-{
-  let endpoint1_i = endpoint1.as_ivec2();
-  let endpoint2_i = endpoint2.as_ivec2();
-  let a = endpoint2_i.y - endpoint1_i.y;
-  let b = endpoint1_i.x - endpoint2_i.x;
-  let c = endpoint2_i.x * endpoint1_i.y - endpoint1_i.x * endpoint2_i.y;
 
-  a*(x as i32) + b*(y as i32) + c >= 0
-}
-
-fn is_inside_triangle(pt1: UVec2, pt2: UVec2, pt3: UVec2, x: u32, y: u32) -> bool
+fn is_inside_triangle(pt1: Vec2, pt2: Vec2, pt3: Vec2, test_pt: Vec2) -> bool
 {
-  is_inside(pt1, pt2,x, y) &&
-  is_inside(pt2, pt3,x, y) &&
-  is_inside(pt3, pt1,x, y)
+  let t = Mat2::from_cols(pt3 - pt1, pt2 - pt1);
+
+  if t.determinant().abs() < 1e-6 {
+    return false;
+  }
+
+  let bary = t.inverse() * (test_pt - pt1);
+  let u = bary.x;
+  let v = bary.y;
+
+  u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 }
 
 fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
@@ -102,9 +102,13 @@ fn nc_to_screen(nc: Vec2, res_height: u32, res_width: u32) -> UVec2 {
              (res_height as f32 * (nc[1] + 1.) / 2.) as u32)
 }
 
+fn uv2_to_v2(v: UVec2) -> Vec2 {
+  Vec2::new(v.x as f32, v.y as f32)
+}
+
 fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> ImageBuffer<Luma<u8>, Vec<u8>> {
   let mut img = GrayImage::new(res_width, res_height);
-  let mut z_buff = vec![f32::INFINITY; (res_width * res_height) as usize];
+  let mut z_buff = vec![-f32::INFINITY; (res_width * res_height) as usize];
 
 
   for prim in prims {
@@ -112,7 +116,7 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     let vt2 = prim.triangle.vertices[1];
     let vt3 = prim.triangle.vertices[2];
     let z = (vt1[2] + vt2[2] + vt3[2]) / 3.0 as f32;
-    
+
     let nc1 = if vt1[2] != 0.0 {vt1.truncate() / vt1[2]} else {vt1.truncate()};
     let nc2 = if vt2[2] != 0.0 {vt2.truncate() / vt2[2]} else {vt2.truncate()};
     let nc3 = if vt3[2] != 0.0 {vt3.truncate() / vt3[2]} else {vt3.truncate()};
@@ -131,7 +135,7 @@ fn rasterize(prims: Vec<VertexStepRes>, res_height: u32, res_width: u32) -> Imag
     // ... for every pixel in box, color pixel, maintain zbuf
     for x in x_min..x_max {
       for y in y_min..y_max {
-        if is_inside_triangle(screen1, screen2, screen3, x, y) {
+        if is_inside_triangle(uv2_to_v2(screen1), uv2_to_v2(screen2), uv2_to_v2(screen3), Vec2 { x: x as f32, y: y as f32 }) && z_buff[((x * res_width) + y) as usize] < z {
           //img.put_pixel(x, y, image::Luma([255]));
           img.put_pixel(x, y, image::Luma([(z * 100.0).abs() as u8]));
           z_buff[((x * res_width) + y) as usize] = z;

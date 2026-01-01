@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 #[macro_export]
 macro_rules! log {
     ($($arg:tt)*) => {{
-        $crate::logger::log(format_args!($($arg)*));
+        $crate::logger::log_fn(format_args!($($arg)*));
     }};
 }
 
@@ -21,7 +21,7 @@ static LOG_FILE: Lazy<Mutex<std::fs::File>> = Lazy::new(|| {
           .unwrap())
 });
 
-pub fn log(args: std::fmt::Arguments) {
+pub fn log_fn(args: std::fmt::Arguments) {
   let mut f = LOG_FILE.lock().unwrap();
   writeln!(f, "{}", args).unwrap();
 }

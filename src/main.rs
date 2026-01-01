@@ -14,13 +14,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       log!("panic {}", info);
   }));
 
-  let _ = render_loop().map_err(|e| logger::log(format_args!("Caught error: {}", e)));
+  let _ = render_loop().map_err(|e| log!("Caught error: {}", e));
 
   Ok(())
 }
 
 fn render_loop() -> Result<(), Box<dyn std::error::Error>> {
-  let mut sphere_tris = rendering::sphere(8, 8);
+  // let mut sphere_tris = rendering::sphere(16, 16);
+  let mut sphere_tris = rendering::cube(1.);
   let mut term = Terminal::new()?;
   term.enter_raw_mode()?;
   term.enter_alternate_screen()?;
@@ -81,7 +82,6 @@ fn render_loop() -> Result<(), Box<dyn std::error::Error>> {
     std::thread::sleep(std::time::Duration::from_millis(500));
     counter = counter + 1;
   }
-
 
   term.show_cursor()?;
   term.exit_alternate_screen()?;
